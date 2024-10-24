@@ -1,4 +1,5 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
+import { User } from "aws-cdk-lib/aws-iam";
 
 /*== STEP 1 ===============================================================
 The section below creates a Todo database table with a "content" field. Try
@@ -6,11 +7,52 @@ adding a new "isDone" field as a boolean. The authorization rule below
 specifies that any user authenticated via an API key can "create", "read",
 "update", and "delete" any "Todo" records.
 =========================================================================*/
-const schema = a.schema({
+const schema = a
+  .schema({
   Todo: a
     .model({
       content: a.string(),    
     }).authorization(allow => [allow.owner()]),
+ 
+  Book: a
+    .model({
+      bookId: a.id().required(), 
+      name: a.string(),
+      pages: a.integer(),
+      image: a.url(),
+      styleId: a.id(),
+      style: a.belongsTo('Style', 'styleId')
+    })
+    .identifier(['bookId'])
+   .authorization(allow => [allow.authenticated()]),
+
+  Style: a
+    .model({
+      styleId: a.id().required(),
+      name: a.string().required(),
+      books: a.hasMany('Book', 'styleId'),
+      trophy: a.hasMany('Trophy', 'styleId'),
+    }).identifier(['styleId'])
+    .authorization(allow => [allow.authenticated()]),
+      
+  Trophy: a 
+  .model({
+    trophyId: a.id().required(),
+    styleId: a.id(),
+    userId:a.id(),
+    style: a.belongsTo('Style', 'styleId'),
+    count: a.integer(),
+  }).identifier(['trophyId'])
+  .authorization(allow => [allow.owner()]),
+
+  Achievement: a
+    .model({
+      achivementId: a.id().required(),
+      userId: a.id(),
+      count: a.integer(),
+    }).identifier(['achivementId'])
+    .authorization(allow => [allow.authenticated()]),   
+
 });
 
 export type Schema = ClientSchema<typeof schema>;
